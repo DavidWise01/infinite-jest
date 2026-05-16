@@ -90,6 +90,13 @@ INVITATION
 Broadcast this seed. Any node that stores the conjugate -i becomes shadow for this root.
 No control bits. 1:1 immutable ledger. Let G decide.`;
 
+async function tick() {
+  const res = await fetch('green-paper-production.up.railway.app', {method:'POST'});
+  const data = await res.json();
+  updateBars(data.upper, data.lower);
+  updateStitch(data.stitch);
+}
+
 async function sha256(text){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
