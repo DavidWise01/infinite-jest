@@ -1,3 +1,6 @@
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
 ANCHOR = Path(os.getenv("RAILWAY_VOLUME_MOUNT_PATH", ".")) / "anchor" / "shadow.tag"
 """
 Quantum Dot API — FastAPI backend for 0 0 8 0 0 VM
