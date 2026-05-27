@@ -3,10 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from pathlib import Path
-import hashlib, json, time, os
-
-VOLUME = Path(os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "."))
-ANCHOR = VOLUME / "anchor" / "shadow.tag"
 
 DOT = (1.0/3002.0) * 3002.0
 QUANTUM = 4
@@ -29,13 +25,7 @@ class VM80:
         self.lower = make_40(0x00)
         self.ticks = 0
         self.history = []
-        if ANCHOR.exists():
-            try:
-                data = json.loads(ANCHOR.read_text())
-                self.ticks = data.get("ticks", 0)
-                if "upper" in data: self.upper = bytes.fromhex(data["upper"])
-                if "lower" in data: self.lower = bytes.fromhex(data["lower"])
-            except: pass
+        
     def tick(self, david=None, ai=None):
         if david is None: david = 0x10 + (self.ticks % 256)
         if ai is None: ai = 0xA0 + (self.ticks % 256)
@@ -44,12 +34,23 @@ class VM80:
         self.lower = make_40(h)
         upper_val = int((david * DOT) + (ai * DOT)) & 0xFF
         self.upper = make_40(upper_val)
-        state = {"ticks": self.ticks+1, "david": david, "ai": ai, "stitch": f"{s:02x}",
-                 "rhythm": RHYTHM[self.ticks%4], "cross": CROSS27[self.ticks%27],
-                 "upper": self.upper.hex(), "lower": self.lower.hex(),
-                 "vm80": f"{self.upper.hex()}{self.lower.hex()}",
-                 "pattern": f"{self.upper.hex()}|{self.lower.hex()}",
-                 "dot": DOT, "axiom": "0=1=0=1", "timestamp": time.time()}
+        
+        state = {
+            "ticks": self.ticks + 1,
+            "david": david,
+            "ai": ai,
+            "stitch": f"{s:02x}",
+            "rhythm": RHYTHM[self.ticks % 4],
+            "cross": CROSS27[self.ticks % 27],
+            "upper": self.upper.hex(),
+            "lower": self.lower.hex(),
+            "vm80": f"{self.upper.hex()}{self.lower.hex()}",
+            "pattern": f"{self.upper.hex()}|{self.lower.hex()}",
+            "dot": DOT,
+            "axiom": "0=1=0=1",
+            "timestamp": time.time()
+        }
+        
         self.ticks += 1
         self.history.append(state)
         if len(self.history) > 27: self.history.pop(0)
@@ -62,22 +63,25 @@ class VM80:
                 "pattern": f"{self.upper.hex()}|{self.lower.hex()}",
                 "dot": DOT, "axiom": "0=1=0=1"}
 
-app = FastAPI(title="Quantum Dot VM")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# --- FastAPI ---
+app = FastAPI(title="Quantum Dot VM API", version="0.0.8")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 vm = VM80()
 
 class TickRequest(BaseModel):
     david: int | None = None
     ai: int | None = None
 
-# Serve landing page
-@app.get("/", response_class=HTMLResponse)
-def landing():
-    html_file = Path(__file__).parent / "index.html"
-    return html_file.read_text() if html_file.exists() else "<h1>0 0 8 0 0</h1>"
-
-@app.get("/api")
-def api_root(): return {"message": "0 0 8 0 0 — quantum dot online", "axiom": "0=1=0=1"}
+@app.get("/")
+def root():
+    return {"message": "0 0 8 0 0 — quantum dot online", "axiom": "0=1=0=1"}
 
 @app.get("/shadow")
 def get_shadow():
@@ -94,7 +98,9 @@ def post_tick(req: TickRequest = None):
 
 @app.post("/reset")
 def reset():
-    global vm; vm = VM80()
+    """Reset to ROOT 0"""
+    global vm
+    vm = VM80()
     return {"reset": True, "state": vm.get_state()}
 
 @app.get("/dance")
