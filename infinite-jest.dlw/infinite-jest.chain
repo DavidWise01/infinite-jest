@@ -1,0 +1,9 @@
+ROOT0-DLW-CHAIN-v1
+index : 1328
+slug  : infinite-jest
+seal  : e9366915d5dbeaa928c7de3c0dc79846a75822c49701c0b8315395a49eb09156
+prev  : 9cd7029d460b884e78224228d54a237d278ec14119ef92c4feb913272ee562db
+link  : 8e637636d8a2fa056e4d4868355af23c6b73ff42e627f08d6df564d81c7e9382
+head  : 41f029ee4eaa0042c67040dc5927434f8e8446341839c86b6a09d79c5fbf30da
+
+— the tether: link = sha256(index|slug|seal|prev). the chain head commits to the whole corpus.
